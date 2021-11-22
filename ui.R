@@ -288,14 +288,38 @@ enrichTab = tabItem(
       ),      
       fluidRow(
         HTML("<h5>M-type (comembership) PAG-to-PAG relationship</h5> <em></em>"),
+        
         DTOutput('mtype_table')   
       ),
       HTML("<h5>M-type (comembership) PAG-to-PAG network</h5> <em></em>"),
       fluidRow(
-        plotlyOutput('mtype')   
+        box(
+          plotlyOutput('mtype', height = 1200L),
+          width = 12L, height = 1300L
+        )
       ),
-
+      HTML("<h5>Louvain cluster</h5> <em></em>"),
+      fluidRow(
+        selectInput(
+          inputId = 'selectCluster',
+          label = 'Selected cluster',
+          choices = 1:10,
+          selected = 1,
+          multiple = F
+        ),
+        DTOutput('df_mtype_cluster')   
+      ),      
+      HTML("<h5>Word cloud</h5> <em></em>"),
+      
+      fluidRow(
+          wordcloud2Output('mtype_wordcloud', width = "100%", height = "400px")
+        
+      ),
     ),
+    
+    
+    
+    
     tabPanel(
       title = "enrichR ", 
       HTML("<h5>Enriched genesets</h5> <em></em>"),
@@ -452,7 +476,7 @@ TanalysisTab = tabItem(
         DTOutput('webgestaltR_uniq')
       )
     )
-  ), 
+  ),
   fluidRow(
     h5("Similar terms detected between WebGestaltR and PAGER."),
   ),

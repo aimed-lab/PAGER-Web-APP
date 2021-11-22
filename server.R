@@ -227,7 +227,6 @@ server <- function(input, output,session) {
     )
     m_type = m_type%>%subset(select=c("GS_A_ID",'GS_B_ID','OLAP','SIMILARITY','nlogPvalue'))
     m_type = m_type[m_type$GS_A_ID!=m_type$GS_B_ID,]
-    
     return(m_type)
   })
   
@@ -239,23 +238,89 @@ server <- function(input, output,session) {
   ,{
     m_type = df_mtype()
     edgelist = cbind(m_type$GS_A_ID,m_type$GS_B_ID)
-    graph <- graph_from_data_frame(edgelist)
+    graph <- graph_from_data_frame(edgelist,directed = FALSE)
     return(graph)
   })
   
-  pd_mtype <- eventReactive({
+  df_mtype_PAG <- eventReactive({
     input$apply_btn
     input$filterbtn
     1
   }
   ,{
     graph = graph_mtype()
+    res_path = df_PAGER_GS()
     clusterlouvain <- cluster_louvain(graph)
+    vs <- V(graph)
+    v_orders = unlist(lapply(names(vs), function(i) which(res_path$GS_ID == i)))
     res_path_mtype = res_path[v_orders,]
     res_path_mtype['cluster'] = clusterlouvain$membership
+    res_path_mtype = res_path_mtype[c("cluster","GS_ID","NAME","SOURCE","FDR","TYPE")]
+    availableCluster = seq(1,max(clusterlouvain$membership))
+    updateSelectInput(session, 
+                      'selectCluster',
+                      label = 'Selected cluster',
+                      choices = availableCluster,
+                      selected = 1
+    )
+
     return(res_path_mtype)
-  })  
+  })
   
+  df_mtype_cluster <- eventReactive({
+    input$apply_btn
+    input$filterbtn
+    input$selectCluster
+    1
+  }
+  ,{
+    res_path_mtype = df_mtype_PAG()
+    df_mtype_cluster = res_path_mtype[res_path_mtype$cluster == input$selectCluster,]
+    return(df_mtype_cluster)
+  })
+  df_wc <- eventReactive({
+    input$apply_btn
+    input$filterbtn
+    input$selectCluster
+    1
+  }
+  ,{  
+    wordlist = df_mtype_cluster()$NAME
+    mooncloud <- as.character(paste0(wordlist,collapse = " "))
+    IDs = c(' Homo sapiens',' R-HSA-[0-9]+$',' WP[0-9]+','hsa[0-9]+ ',' - Homo sapiens \\(human\\)',' $')
+    IDs_str = paste0(IDs,collapse = "|")
+    mooncloud = gsub(IDs_str,"\\1",mooncloud,ignore.case = T)
+    mooncloud = gsub("[\\(|\\)]+","",mooncloud)
+    
+    ConvertStrings <- function(textInput){
+      textOutput <- gsub("\\)", "", textInput)
+      textOutput <- gsub("c\\(", "", textOutput)
+      textOutput <- gsub(",", "", textOutput)
+      return(textOutput)
+    }
+    
+    docs <- Corpus(
+      VectorSource(strsplit(mooncloud," ")),
+      readerControl = list(language = "en")
+    ) %>% 
+      tm_map(tolower)  %>%
+      tm_map(removeWords, stopwords("english")) %>%
+      tm_map(removeWords, c("pathway","signaling","human","homo","sapiens","hsa","and")) %>% 
+      tm_map(ConvertStrings)
+    #%>% tm_map(removePunctuation)
+    #%>% tm_map(removeNumbers)
+    #%>% tm_map(stripWhitespace) 
+    #%>% tm_map(PlainTextDocument)
+    
+    tdm <- TermDocumentMatrix(docs) %>%
+      as.matrix()
+    df_wc = data.frame(name = rownames(tdm),freq = as.vector(tdm))
+    df_wc = df_wc[order(df_wc$freq,decreasing = T),]
+    df_wc$name = gsub("[,|\"\\]","",df_wc$name)
+    return(df_wc)
+  })
+  
+  ###
   df_enrichR_GS <- eventReactive({
     input$enrichR_apply_btn
     input$filterbtn
@@ -523,7 +588,8 @@ server <- function(input, output,session) {
   # step 3. enrichment and histogram #
   ## PAGER ##
   output$tablePAGER <- renderDT({
-    datatable(elementId = "tablePAGER",
+    datatable(
+      elementId = "tablePAGER",
       df_PAGER_GS(),
       extensions = c('Responsive','Buttons'), 
       class = 'cell-border stripe',
@@ -535,6 +601,7 @@ server <- function(input, output,session) {
       )
     )
   })
+  
   output$PAGERpie <- renderPlotly({
     res_path = df_PAGER_GS()
     res_source_count = data.frame(source = names(table(res_path$SOURCE)),frequency = as.vector(table(res_path$SOURCE)))
@@ -547,6 +614,7 @@ server <- function(input, output,session) {
       yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE)
     )
   })
+  
   output$PAGERhist <- renderPlotly({
     res_path = df_PAGER_GS()
     path_histo = ggplot(
@@ -594,7 +662,6 @@ server <- function(input, output,session) {
         "<b>%{text}</b><br><br>",
         "<extra></extra>"
       )
-      
     )
     edge_shapes <- list()
     for(i in 1:Ne) {
@@ -618,12 +685,11 @@ server <- function(input, output,session) {
       shapes = edge_shapes,
       xaxis = list(title = "", showgrid = FALSE, showticklabels = FALSE, zeroline = FALSE),
       yaxis = list(title = "", showgrid = FALSE, showticklabels = FALSE, zeroline = FALSE),
-      height = 1500
+      height = 1200
     )
     
     return(network)
   })
-  
   
   
   output$mtype_table <- renderDT({
@@ -638,6 +704,72 @@ server <- function(input, output,session) {
                 responsive = TRUE
               )
     )  
+  })
+
+  
+  output$df_mtype_cluster <- renderDT({
+    datatable(elementId = "df_mtype_cluster",
+              df_mtype_cluster(),
+              extensions = c('Responsive','Buttons'), 
+              class = 'cell-border stripe',
+              options = list(
+                pageLength = 5,
+                buttons = c('copy', 'csv', 'excel'),
+                dom = 'Blfrtip',
+                responsive = TRUE
+              )
+    )  
+  })
+  # fix the error of not showing other images 
+  wordcloud2a <- function (data, size = 1, minSize = 0, gridSize = 0, fontFamily = "Segoe UI", 
+                           fontWeight = "bold", color = "random-dark", backgroundColor = "white", 
+                           minRotation = -pi/4, maxRotation = pi/4, shuffle = TRUE, 
+                           rotateRatio = 0.4, shape = "circle", ellipticity = 0.65, 
+                           widgetsize = NULL, figPath = NULL, hoverFunction = NULL) 
+  {
+    if ("table" %in% class(data)) {
+      dataOut = data.frame(name = names(data), freq = as.vector(data))
+    }
+    else {
+      data = as.data.frame(data)
+      dataOut = data[, 1:2]
+      names(dataOut) = c("name", "freq")
+    }
+    if (!is.null(figPath)) {
+      if (!file.exists(figPath)) {
+        stop("cannot find fig in the figPath")
+      }
+      spPath = strsplit(figPath, "\\.")[[1]]
+      len = length(spPath)
+      figClass = spPath[len]
+      if (!figClass %in% c("jpeg", "jpg", "png", "bmp", "gif")) {
+        stop("file should be a jpeg, jpg, png, bmp or gif file!")
+      }
+      base64 = base64enc::base64encode(figPath)
+      base64 = paste0("data:image/", figClass, ";base64,", 
+                      base64)
+    }
+    else {
+      base64 = NULL
+    }
+    weightFactor = size * 180/max(dataOut$freq)
+    settings <- list(word = dataOut$name, freq = dataOut$freq, 
+                     fontFamily = fontFamily, fontWeight = fontWeight, color = color, 
+                     minSize = minSize, weightFactor = weightFactor, backgroundColor = backgroundColor, 
+                     gridSize = gridSize, minRotation = minRotation, maxRotation = maxRotation, 
+                     shuffle = shuffle, rotateRatio = rotateRatio, shape = shape, 
+                     ellipticity = ellipticity, figBase64 = base64, hover = htmlwidgets::JS(hoverFunction))
+    chart = htmlwidgets::createWidget("wordcloud2", settings, 
+                                      width = widgetsize[1], height = widgetsize[2], sizingPolicy = htmlwidgets::sizingPolicy(viewer.padding = 0, 
+                                                                                                                              browser.padding = 0, browser.fill = TRUE))
+    chart
+  }
+  wordcloud2Output
+  output$mtype_wordcloud <- renderWordcloud2({
+    wordcloud2a(
+      color = "blue",shuffle = F,gridSize = 1,maxRotation = 0,minRotation = 0,
+      df_wc()               
+    )
   })
   
   ## enrichR ##
@@ -840,4 +972,5 @@ server <- function(input, output,session) {
       #cat.col = c("blue", "red", "green")
     )
   })
+  traceback()
 }
