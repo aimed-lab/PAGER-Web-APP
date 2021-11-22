@@ -1,4 +1,5 @@
 wordcloud/*
+rsconnect/*
 DEseq2_clean.R
 test.txt
 mtype.txt
