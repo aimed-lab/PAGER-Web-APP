@@ -1,0 +1,15 @@
+---
+title: "Description"
+output: html_document
+---
+
+#### Dataset description
+
+* The melanoma dataset:
+
+The "melanoma" data set is a cohort of stage M1c patients with RAS or RAF mutations with drug resistance compared to those who are drug sensitive processed from the cBioPortal (https://www.cbioportal.org/study/summary?id=skcm_mskcc_2014) using DEseq2 library (https://bioconductor.org/packages/release/bioc/html/DESeq2.html).
+
+* The UALCAN dataset:
+
+The collection of both top 250 over-expressed genes and top 250 under-expressed genes from each cancer type from UALCAN [https://ualcan.path.uab.edu/] (https://ualcan.path.uab.edu/)
+

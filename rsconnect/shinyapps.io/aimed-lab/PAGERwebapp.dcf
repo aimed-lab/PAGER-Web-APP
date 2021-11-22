@@ -1,0 +1,14 @@
+name: PAGERwebapp
+title: PAGERwebapp
+username:
+account: aimed-lab
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 5138293
+bundleId: 5275584
+url: https://aimed-lab.shinyapps.io/PAGERwebapp/
+when: 1637475183.82424
+lastSyncTime: 1637475183.82426
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: DEseq2_clean.R|lmfit_code.r|note.txt|run.R|test.txt|userInterface/vulcanoPlot.R|Project_1637400799|wordcloud

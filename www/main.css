@@ -1,0 +1,73 @@
+/* Get a fancy font from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Yusei+Magic&display=swap');
+
+li a {
+  margin-right: 10px;
+}
+content-wrapper .content {
+  margin-top: 100px;
+}
+.tabbable {
+  margin-top: 20px;
+}
+
+#mtype {
+  height: 1000px;
+}
+
+body {
+  /*background-color: black;*/
+  color: white; /* text color */
+  margin-top:50px;
+}
+
+/* Change header text to imported font */
+h2 {
+  font-family: 'Yusei Magic', sans-serif;
+}
+
+/* Make text visible on inputs */
+.shiny-input-container {
+  color: #474747;
+}
+
+.ralign {
+  float: right;
+}
+.mainSections {
+  height: 85vh;
+  margin-bottom: 2vh;
+  padding: 1vw;
+  font-size: 18px;
+}
+.irs-bar,
+.irs-bar-edge,
+.irs-single,
+.irs-grid-pol{
+  background: #48639C ;
+  border-color: #48639C ;
+}
+
+.checkbox input{
+  background-color: #48639C ;
+}
+
+.brand-text {
+  margin-left:85px  !important; 
+
+}
+
+.brand-link {
+  font-size: 125% !important;
+  
+}
+
+.infoBadge {
+  font-size:120% !important;
+  
+}
+
+.infobtn2 {
+  border-radius: 50% !important;
+  padding: 0 !important;
+}

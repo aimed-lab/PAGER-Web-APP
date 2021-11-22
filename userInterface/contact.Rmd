@@ -1,0 +1,28 @@
+---
+title: "contact"
+output: html_document
+---
+
+
+## Principle Investigator:
+* Jake Y. Chen, Ph.D.
+
+## Team Members:
+* Zongliang Yue
+* Radomir slominski
+* Samuel Bharti
+* Nishant Batra
+
+
+
+## How to cite us:
+PAGER web app: Interactive, online gene set and network interpretation of high-throughput functional genomics results. Frontiers in Genetics (under review)
+
+## Contact Us
+If you have questions or comments about the PAGER web app, please email Dr. Jake Chen, [jakechen@uab.edu](mailto:jakechen@uab.edu).
+
+
+If you need any technical support, please email Zongliang Yue, [zongyue@uab.edu](mailto:zongyue@uab.edu).
+
+
+Our lab: [AI.MED Laboratory](http://aimed-lab.org/), University of Alabama at Birmingham, Alabama, USA.
